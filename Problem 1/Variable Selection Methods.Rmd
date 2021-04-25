@@ -1,0 +1,112 @@
+---
+title: "Variable Selection Methods"
+output: html_notebook
+---
+
+## All Possible Regression
+
+For K potential features there are $2^k$ distinct possible regression models
+to be tested.
+
+```{r}
+library(olsrr)
+model = lm(mpg ~ disp + hp + wt + qsec, data =mtcars)
+k = ols_step_all_possible(model)
+k
+```
+
+`plot` can be used to show the panel of fit criteria for all possible regressions.
+```{r}
+plot(k)
+```
+
+## Best Subset Regression
+
+Selects the best subset that perform the best at some objective criteria, such
+as $R^2$, MS2, AIC, etc.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+k = ols_step_best_subset(model)
+k
+plot(k)
+```
+
+## Stepwise Forward Regression
+
+Buils a regression model from a set of features by entering them one by one
+based on p values. Further details can be obtained by setting `details = true`.
+
+```{r}
+model = lm(y ~ ., data = surgical)
+k = ols_step_forward_p(model)
+k
+plot(k)
+```
+
+## Stepwise Backward Regression
+
+Builds a regression model starting with all features and removing them one
+by one based on p values. Further details can be obtained by setting 
+`details = true`.
+
+```{r}
+model = lm(y ~ ., data = surgical)
+k = ols_step_backward_p(model)
+k
+plot(k)
+```
+
+## Stepwise regression
+
+An iterative method in which features are entered and removed one by one and
+decided upon by performing f or t tests to know if they were significant.
+
+```{r}
+model = lm(y ~ ., data = surgical)
+k = ols_step_both_p(model)
+k
+plot(k)
+```
+
+## Stepwise AIC Forward Regression
+
+An iterative method in which features are added one by one and decided upon by
+checking the Akaike Information Criterion (less is better).
+
+```{r}
+model = lm(y ~ ., data =surgical)
+k = ols_step_forward_aic(model)
+k
+plot(k)
+```
+
+
+## Stepwise AIC Backward Regression
+
+An iterative method in which features are removed one by one and
+decided upon by checking the Akaike Information Criterion (less is better).
+```{r}
+model = lm(y ~ ., data =surgical)
+k = ols_step_backward_aic(model)
+k
+plot(k)
+```
+
+## Stepwise AIC Regression
+
+An iterative method in which features are added and removed one by one, and
+decided upon by checking the Akaike Information Criterion (less is better).
+
+```{r}
+model = lm(y ~ ., data = surgical)
+k = ols_step_both_aic(model)
+k
+plot(k)
+```
+
+## Reference
+
+https://olsrr.rsquaredacademy.com/articles/variable_selection.html
+
+

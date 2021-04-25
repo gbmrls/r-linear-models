@@ -1,0 +1,165 @@
+---
+title: "Collinearity Diagnostics, Model Fit & Variable Contribution"
+output: html_notebook
+---
+
+# Collinearity Diagnostics
+
+Collinearity implies two variables are near perfect linear combinations of one
+another. Multicollinearity involves more than two variables. In the presence of
+multicollinearity, regression estimates are unstable and have high standard
+errors.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_coll_diag(model)
+```
+
+
+## Variance Inflation Factors
+
+They measure the inflation in the variances of the parameter estimates due to
+collinearities that exist among the featuers. It is a measure of how much the
+variance of the regression coefficient $\beta_k$ is inflated by the existence
+of correlation among the features in the model.
+
+A VIF of 1 means that there is no correlation. The general rule of thumb is that
+VIFs exceeding 4 warrant further investigation. The steps to calculate VIF are:
+*   Regress the $k^{th}$ feature on rest of the features in the model.
+*   Compute $R_k^2$
+
+$$ VIF = \frac{1}{1-R_k^2} = \frac{1}{Tolerance} $$
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_vif_tol(model)
+```
+
+## Condition Index
+
+Most multivariate statistical approaches involve decomposing a correlation
+matrix into linear combinations of variables. The linear combinations are chosen
+so that the first combination has the largest possible variance (subject to some
+restrictions we won’t discuss), the second combination has the next largest
+variance, subject to being uncorrelated with the first, the third has the
+largest possible variance, subject to being uncorrelated with the first and
+second, and so forth. The variance of each of these linear combinations is
+called an eigenvalue. Collinearity is spotted by finding 2 or more variables
+that have large proportions of variance (.50 or more) that correspond to large
+condition indices. A rule of thumb is to label as large those condition indices
+in the range of 30 or larger.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_eigen_cindex(model)
+```
+
+# Model Fit Assessment
+
+## Residual Fit Spread Plot
+
+Plot to detect non-linearity, influential observations and outliers. Consists of
+side-by-side quantile plots of the centered fit and the residuals.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_resid_fit_spread(model)
+```
+
+## Part & Partial Correlations
+
+### Correlations
+How much each feature uniquely contributes to $R^2$.
+
+### Zero order
+Pearson correlation coefficient between the dependent variable and the features.
+
+### Part
+Unique contribution of feature. How much the $R^2$ would decrease if the feature
+was removed from the model.
+
+### Partial
+How much of the output variance is estimaited by the feature.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_correlations(model)
+```
+
+## Observed vs Predicted Plot
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_obs_fit(model)
+```
+
+## Lack of Fit F Test
+
+The residual sum of squares can be decomposed into 2 components:
+*   Due to lack of fit
+*   Due to random variation
+
+If most of the error is due to lack of fit and not just random error, the model
+should be discarded and a new model must be built. The test assesses how much
+of the error in the prediction is due to the lack of model fit.
+```{r}
+model = lm(mpg ~ disp, data = mtcars)
+ols_pure_error_anova(model)
+```
+
+## Diagnostics Panel
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_diagnostics(model)
+
+```
+
+# Variable Contributions
+
+## Residual vs Regressor Plots
+
+Graph to determine whether we should add a new predictor to the model already
+containing other predictors. The residuals from the model is regressed on the
+new predictor and if the plot shows non random pattern, you should consider
+adding the new predictor to the model.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt, data = mtcars)
+ols_plot_resid_regressor(model, 'drat')
+```
+
+## Added Variable Plot
+
+Provides information about the marginal importance of a feature X, given the
+other features already in the model.
+
+Steps to construct an added variable plot:
+*   Regress Y on all features other than X and store the residuals.
+*   Regress X on all the other features in the model.
+*   Construct a scatter plot with the residuals of the previous steps.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_added_variable(model)
+```
+
+## Residual Plus Component Plot
+
+Steps to construct the plot:
+*   Regress Y on all features including X.
+*   Multiply $e$ with regression coefficient of X.
+*   Construct plot of $eX$ and $X$.
+
+The residual plus component plot indicates whether any non-linearity is present
+in the relationship between Y and X and can suggest possible transformations for
+linearizing the data.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_comp_plus_resid(model)
+```
+
+
+
+# References
+https://olsrr.rsquaredacademy.com/articles/regression_diagnostics.html

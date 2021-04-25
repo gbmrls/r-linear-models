@@ -1,0 +1,59 @@
+---
+title: "Residual Diagnostics"
+output: html_notebook
+---
+
+## Residual QQ Plot
+
+Used to violation of normality assumption.
+
+```{r}
+library(olsrr)
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_resid_qq(model)
+```
+
+## Residual Normality Test
+
+Tests for normality by means of multiple statistical tests.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_test_normality(model)
+```
+
+Correlation between observed residuals and expected residuals under normality.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_test_correlation(model)
+```
+
+## Residual vs Fitted Values Plot
+
+A scatter plot of residuals vs fitted values to detect non-linearity, unequal
+error variances and outliers.
+
+```{r}
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_resid_fit(model)
+```
+
+A good residual vs fitted plot has:
+*   Residuals randomly spread around the 0 line.
+*   Residuals forming a band around the 0 (like a pipe) indicating homogeneity
+of error variance.
+*   No residual visibly away from the random pattern.
+
+## Residual Histogram
+
+Used to detect violation of normality assumption.
+
+```{r}
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_resid_hist(model)
+```
+
+
+## References
+https://olsrr.rsquaredacademy.com/articles/residual_diagnostics.html

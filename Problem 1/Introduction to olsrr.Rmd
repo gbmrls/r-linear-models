@@ -1,0 +1,84 @@
+---
+title: "Introduction to olsrr"
+output: html_notebook
+---
+
+## Regression
+
+An ordinary least squares regression can be done with the command `ols_regress`,
+where the parameters that need to be entered are as follows
+*   output model (`outvar ~ var + var2 + ... + varn`)
+*   data (`data = matrix_var`)
+E.g.
+
+```{r}
+library(olsrr)
+ols_regress(mpg ~ disp + hp + wt + qsec, data = mtcars)
+
+```
+
+
+## Residual vs Fitted Values Plot
+
+Used to detect non-linearity, unequal error variances and outliers.
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_resid_fit(model)
+```
+## DFBETAs Panel
+
+DFBETA -> Degrees of Freedom: measures the difference in each parameter estimate
+with and without the influential observation.
+
+```{r}
+model = lm(mpg ~ disp + hp + wt, data = mtcars)
+ols_plot_dfbetas(model)
+```
+## Residual Fit Spread Plot
+Used to detect non-linearity, influential observations and outliers.
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_plot_resid_fit_spread(model)
+```
+
+
+## Breusch Pagan Test
+
+Used to test for heteroscedasticity. The variance of the errors from the
+regression are tested for dependence from the independent variables with a
+chi^2 test.
+```{r}
+model = lm(mpg ~ disp + hp + wt + drat, data = mtcars)
+ols_test_breusch_pagan(model)
+```
+## Collinearity Diagnostics
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_coll_diag(model)
+```
+
+## Stepwise regression
+
+An iterative method in which features are entered and removed one by one and
+decided upon by performing f or t tests to know if they were significant.
+
+```{r}
+model = lm(y ~ ., data = surgical)
+k = ols_step_both_p(model)
+k
+plot(k)
+```
+
+## Stepwise AIC Backward Regression
+
+An iterative method in which features are removed one by one and
+decided upon by checking the Akaike Information Criterion (less is better).
+```{r}
+model = lm(y ~ ., data =surgical)
+k = ols_step_backward_aic(model)
+k
+plot(k)
+```
+
+# References
+https://olsrr.rsquaredacademy.com/articles/intro.html

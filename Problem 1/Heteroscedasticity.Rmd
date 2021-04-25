@@ -1,0 +1,101 @@
+---
+title: "Heteroscedasticity"
+output: html_notebook
+---
+
+One of the assumptions for an ordinary least squares regression is that the errors
+are constant across the domain of the model (variance does not vary with input).
+This is known as homoscedasticity, and its counterpart is heteroscedasticity.
+
+As homoscedasticity is an assumption of the formulation of OLS, if the model has
+heteroscedasticity the model's hypothesis test are no longer valid, and the
+estimators are not BLUE (Best Linear Unbiased Estimator).
+
+## Bartlett Test
+
+Used to test if variances across samples is equal.
+Its null hypothesis is that the variances are equivalent.
+$$ H_0: \sigma_1^2 = \sigma_2^2 = ... = \sigma_k^2 $$
+Its alternative hypothesis is that at least one pair of variances are different.
+$$ H_a: \sigma_i^2 \neq \sigma_j^2 \ \ \ \text{for at least one pair} (i,j) $$
+
+```{r}
+library(olsrr)
+ols_test_bartlett(hsb, 'read', group_var = 'female')
+```
+## Breusch Pagan Test
+
+Introduced by Trevor Breusch and Adrian Pagan in 1979. It tests whether the
+variance of the errors from a regression is dependent on the values of the
+independent variables by means of a $\chi^2$ test.
+
+$$ H_0: \sigma_1^2 = \sigma_2^2 = ... = \sigma_k^2 $$
+$$ H_a: \sigma_i^2 \neq \sigma_j^2 \ \ \ \text{for at least one pair} (i,j) $$
+### Using fitted values
+```{r}
+model = lm(mpg ~ disp + hp + wt + drat, data = mtcars)
+ols_test_breusch_pagan(model)
+```
+
+### Using independent variables
+```{r}
+model = lm(mpg ~ disp + hp + wt + drat, data = mtcars)
+ols_test_breusch_pagan(model, rhs = TRUE)
+```
+
+### Using independent variables and performing multiple tests
+```{r}
+model = lm(mpg ~ disp + hp + wt + drat, data = mtcars)
+ols_test_breusch_pagan(model, rhs = TRUE, multiple = TRUE)
+```
+The p-value can be adjusted with the `p.adj` parameter. Bonferroni, Sidak and
+Holm's p-value adjustment are available.
+
+## Score Test
+
+Test for heteroscedasticity under the assumption that the errors are iid.
+
+### Using fitted values
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_test_score(model)
+```
+
+### Using independent variables
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_test_score(model, rhs = TRUE)
+```
+
+### Specify variables
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_test_score(model, vars = c('disp', 'hp'))
+```
+
+## F Test
+
+F test for heteroscedasticity under the assumption that the errors are iid.
+
+### Using fitted values
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_test_f(model)
+```
+
+### Using independent variables
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_test_f(model, rhs = TRUE)
+```
+
+### Specify variables
+
+```{r}
+model = lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_test_f(model, vars = c('disp', 'hp'))
+```
+
+
+## References
+https://olsrr.rsquaredacademy.com/articles/heteroskedasticity.html
