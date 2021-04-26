@@ -1,0 +1,686 @@
+---
+title: "Forest Fires Multivariate Regression"
+output:
+  html_document:
+    df_print: paged
+---
+
+We are using Forest Fires Data Set [UCI - Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Forest+Fires)- This is a difficult regression task, where the aim is to predict the burned area of forest fires, in the northeast region of Portugal by using meteorological and other data.
+
+## Introduction
+
+Before we get started, it is important for us to install the necessary R packages into R and launch these R packages into R environment. Then the codes chunks below uses glimpse() to display the data structure of will do the job.
+
+
+```{r}
+packages = c('olsrr', 'corrplot', 'ggpubr', 
+             'readxl', 'ggstatsplot',
+             'funModeling', 'tidyverse')
+for (p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+
+
+data_forestfires <- read.csv("/cloud/project/forestfires.csv",
+                            header=TRUE,sep=",")
+
+glimpse(data_forestfires)
+
+```
+
+## Regresion Basic lm()
+
+An ordinary least squares regression can be done with the command `ols_regress`,
+where the parameters that need to be entered are as follows
+*   output model (`outvar ~ var + var2 + ... + varn`)
+*   data (`data = matrix_var`)
+E.g.
+
+First, we will build a simple linear regression model by using Price as the dependent variable and wind as the independent variable.
+
+lm() returns an object of class “lm” or for multiple responses of class c(“mlm”, “lm”).
+
+The functions summary() and anova() can be used to obtain and print a summary and analysis of variance table of the results. The generic accessor functions coefficients, effects, fitted.values and residuals extract various useful features of the value returned by lm.
+
+```{r}
+data_forestfires.slr <- lm(formula = temp~wind, data = data_forestfires)
+
+summary(data_forestfires.slr)
+
+```
+The output report reveals that the Fire Probability can be explained by using the formula:
+
+      *y = 21.8464 + -0.7361x1*
+      
+The R-squared of 0.05158 reveals that the simple regression model built is able to explain about 5% of the windy.
+
+Since p-value is much smaller than 0.0001, we will reject the null hypothesis that mean is a good estimator of trade-in prices. This will allow us to infer that simple linear regression model above is a good estimator of Fire Probability.
+
+The Coefficients: section of the report reveals that the p-values of both the estimates of the Intercept and wind are smaller than 0.001. In view of this, the null hypothesis of the B0 and B1 are equal to 0 will be rejected. As a results, we will be able to infer that the B0 and B1 are good parameter estimates.
+
+To visualise the best fit curve on a scatterplot, we can incorporate lm() as a method function in ggplot’s geometry as shown in the code chunk below.      
+## Initial Model lm()
+
+```{r}
+data_forestfires.mlr <- lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+
+summary(data_forestfires.mlr)
+
+```
+The R-squared of 0.6252 reveals that the simple regression model built is able to explain about 62% of the trade-in prices.
+
+
+## Residual vs Fitted Values Plot
+Used to detect non-linearity, unequal error variances and outliers.
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_fit(model)
+```
+
+## DFBETAs Panel
+
+DFBETA -> Degrees of Freedom: measures the difference in each parameter estimate
+with and without the influential observation.
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_dfbetas(model)
+```
+
+## Residual Fit Spread Plot
+Used to detect non-linearity, influential observations and outliers.
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_fit_spread(model)
+```
+
+## Breusch Pagan Test
+
+Used to test for heteroscedasticity. The variance of the errors from the
+regression are tested for dependence from the independent variables with a
+chi^2 test.
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_breusch_pagan(model)
+```
+## Collinearity Diagnostics
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_coll_diag(model)
+```
+
+## Stepwise regression
+
+An iterative method in which features are entered and removed one by one and
+decided upon by performing f or t tests to know if they were significant.
+
+
+```{r}
+model = lm(y ~ ., data = surgical)
+k = ols_step_both_p(model)
+k
+plot(k)
+```
+
+## Stepwise AIC Backward Regression
+
+An iterative method in which features are removed one by one and
+decided upon by checking the Akaike Information Criterion (less is better).
+
+```{r}
+model = lm(y ~ ., data =surgical)
+k = ols_step_backward_aic(model)
+k
+plot(k)
+```
+
+# References
+https://olsrr.rsquaredacademy.com/articles/intro.html
+
+One of the assumptions for an ordinary least squares regression is that the errors
+are constant across the domain of the model (variance does not vary with input).
+This is known as homoscedasticity, and its counterpart is heteroscedasticity.
+
+As homoscedasticity is an assumption of the formulation of OLS, if the model has
+heteroscedasticity the model's hypothesis test are no longer valid, and the
+estimators are not BLUE (Best Linear Unbiased Estimator).
+
+## Bartlett Test
+
+Used to test if variances across samples is equal.
+Its null hypothesis is that the variances are equivalent.
+$$ H_0: \sigma_1^2 = \sigma_2^2 = ... = \sigma_k^2 $$
+Its alternative hypothesis is that at least one pair of variances are different.
+$$ H_a: \sigma_i^2 \neq \sigma_j^2 \ \ \ \text{for at least one pair} (i,j) $$
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_breusch_pagan(model)
+```
+### Using independent variables
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_breusch_pagan(model, rhs = TRUE)
+```
+### Using independent variables and performing multiple tests
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_breusch_pagan(model, rhs = TRUE, multiple = TRUE)
+```
+The p-value can be adjusted with the `p.adj` parameter. Bonferroni, Sidak and
+Holm's p-value adjustment are available.
+
+
+## Score Test
+
+Test for heteroscedasticity under the assumption that the errors are iid.
+
+### Using fitted values
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_score(model)
+```
+
+### Using independent variables
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_score(model, rhs = TRUE)
+```
+
+### Specify variables
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_score(model, vars = c('DMC', 'DC'))
+```
+
+## F Test
+
+F test for heteroscedasticity under the assumption that the errors are iid.
+
+### Using fitted values
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_f(model)
+```
+
+### Using independent variables
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_f(model, rhs = TRUE)
+```
+
+### Specify variables
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_f(model, vars = c('DMC', 'DC'))
+```
+
+
+## References
+https://olsrr.rsquaredacademy.com/articles/heteroskedasticity.html
+
+
+
+## All Possible Regression
+
+## Variable Selection Methods
+
+
+For K potential features there are $2^k$ distinct possible regression models
+to be tested.
+
+
+```{r}
+
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+k = ols_step_all_possible(model)
+k
+```
+
+`plot` can be used to show the panel of fit criteria for all possible regressions.
+```{r}
+plot(k)
+```
+
+## Best Subset Regression
+
+Selects the best subset that perform the best at some objective criteria, such
+as $R^2$, MS2, AIC, etc.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+k = ols_step_best_subset(model)
+k
+plot(k)
+```
+
+## Stepwise Forward Regression
+
+Buidls a regression model from a set of features by entering them one by one
+based on p values. Further details can be obtained by setting `details = true`.
+
+```{r}
+model = lm(temp ~ ., data = data_forestfires)
+k = ols_step_forward_p(model)
+k
+plot(k)
+```
+
+
+## Stepwise Backward Regression
+
+Builds a regression model starting with all features and removing them one
+by one based on p values. Further details can be obtained by setting 
+`details = true`.
+
+```{r}
+model = lm(temp ~ ., data = data_forestfires)
+k = ols_step_backward_p(model)
+k
+plot(k)
+```
+
+
+## Stepwise regression
+
+An iterative method in which features are entered and removed one by one and
+decided upon by performing f or t tests to know if they were significant.
+
+```{r}
+model = lm(temp ~ ., data = data_forestfires)
+k = ols_step_both_p(model)
+k
+plot(k)
+```
+
+
+## Stepwise AIC Forward Regression
+
+An iterative method in which features are added one by one and decided upon by
+checking the Akaike Information Criterion (less is better).
+
+```{r}
+model = lm(temp ~ ., data = data_forestfires)
+k = ols_step_forward_aic(model)
+k
+plot(k)
+```
+
+
+## Stepwise AIC Backward Regression
+
+An iterative method in which features are removed one by one and
+decided upon by checking the Akaike Information Criterion (less is better).
+```{r}
+model = lm(temp ~ ., data = data_forestfires)
+k = ols_step_backward_aic(model)
+k
+plot(k)
+```
+
+## Stepwise AIC Regression
+
+An iterative method in which features are added and removed one by one, and
+decided upon by checking the Akaike Information Criterion (less is better).
+
+```{r}
+model = lm(temp ~ ., data = data_forestfires)
+k = ols_step_both_aic(model)
+k
+plot(k)
+```
+
+## Reference
+
+https://olsrr.rsquaredacademy.com/articles/variable_selection.html
+
+
+## Measures of Influence
+
+It is possible for a single observation to have a great influence on the results
+of a regression. It is, therefore, important to detect influential observations
+to take them into consideration when interpreting results.
+
+## Cook's D Bar Plot
+
+Cook's distance was introduced in 1977 by American statician R Dennis Cook. It
+depends on both the residual and leverage. The steps to compute it are:
+*   delete observations one at a time
+*   refit the regression model on the remaining observations
+*   examine how much the fitted values changed after the observation was deleted
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_cooksd_bar(model)
+```
+
+## Cook's D Chart
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_cooksd_chart(model)
+```
+
+
+## DFBETAs Panel
+
+(DF -> Degrees of Freedom)
+
+DFBETA measures the difference in each parameter estimate with and without the
+influential point. There is a DFBETA for each data point.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_dfbetas(model)
+```
+
+## DFFITS Plot
+
+Proposed by Welsch and Kuh (1977). It is the difference between the $i^{th}$
+fitted value obtained from the full data and the $i^{th}$ observation. Used to
+identify influential data points.
+
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_dffits(model)
+```
+
+
+## Studentized Residual Plot
+
+Studentized deleted residuals is the deleted residual divided by its estimated
+standard deviation. If an observation has a studentized deleted residual larger
+than 3 (absolute value) we call it an outlier.
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_stud(model)
+```
+
+## Standardized Residual Chart
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_stand(model)
+```
+
+
+## Studentized Residuals vs Leverage Plot
+
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_lev(model)
+```
+
+## Deleted Studentized Residual vs Fitted Values Plot
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_stud_fit(model)
+```
+
+## Hadi Plot
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_hadi(model)
+```
+
+## Potential Residual Plot
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_pot(model)
+```
+
+
+## Reference
+https://olsrr.rsquaredacademy.com/articles/influence_measures.html
+
+
+
+# Collinearity Diagnostics
+
+Collinearity implies two variables are near perfect linear combinations of one
+another. Multicollinearity involves more than two variables. In the presence of
+multicollinearity, regression estimates are unstable and have high standard
+errors.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_coll_diag(model)
+```
+
+
+
+## Variance Inflation Factors
+
+They measure the inflation in the variances of the parameter estimates due to
+collinearities that exist among the featuers. It is a measure of how much the
+variance of the regression coefficient $\beta_k$ is inflated by the existence
+of correlation among the features in the model.
+
+A VIF of 1 means that there is no correlation. The general rule of thumb is that
+VIFs exceeding 4 warrant further investigation. The steps to calculate VIF are:
+*   Regress the $k^{th}$ feature on rest of the features in the model.
+*   Compute $R_k^2$
+
+$$ VIF = \frac{1}{1-R_k^2} = \frac{1}{Tolerance}$$
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_vif_tol(model)
+```
+
+
+## Condition Index
+
+Most multivariate statistical approaches involve decomposing a correlation
+matrix into linear combinations of variables. The linear combinations are chosen
+so that the first combination has the largest possible variance (subject to some
+restrictions we won’t discuss), the second combination has the next largest
+variance, subject to being uncorrelated with the first, the third has the
+largest possible variance, subject to being uncorrelated with the first and
+second, and so forth. The variance of each of these linear combinations is
+called an eigenvalue. Collinearity is spotted by finding 2 or more variables
+that have large proportions of variance (.50 or more) that correspond to large
+condition indices. A rule of thumb is to label as large those condition indices
+in the range of 30 or larger.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_eigen_cindex(model)
+```
+
+# Model Fit Assessment
+
+## Residual Fit Spread Plot
+
+Plot to detect non-linearity, influential observations and outliers. Consists of
+side-by-side quantile plots of the centered fit and the residuals.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_fit_spread(model)
+```
+
+
+## Part & Partial Correlations
+
+### Correlations
+How much each feature uniquely contributes to $R^2$.
+
+### Zero order
+Pearson correlation coefficient between the dependent variable and the features.
+
+### Part
+Unique contribution of feature. How much the $R^2$ would decrease if the feature
+was removed from the model.
+
+### Partial
+How much of the output variance is estimaited by the feature.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_correlations(model)
+```
+
+## Observed vs Predicted Plot
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_obs_fit(model)
+```
+
+## Lack of Fit F Test
+
+The residual sum of squares can be decomposed into 2 components:
+*   Due to lack of fit
+*   Due to random variation
+
+If most of the error is due to lack of fit and not just random error, the model
+should be discarded and a new model must be built. The test assesses how much
+of the error in the prediction is due to the lack of model fit.
+```{r}
+data_forestfires.mlr <- lm(formula = temp~wind, data = data_forestfires)
+ols_pure_error_anova(data_forestfires.mlr)
+```
+
+## Diagnostics Panel
+
+```{r}
+lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_diagnostics(model)
+
+```
+
+# Variable Contributions
+
+## Residual vs Regressor Plots
+
+Graph to determine whether we should add a new predictor to the model already
+containing other predictors. The residuals from the model is regressed on the
+new predictor and if the plot shows non random pattern, you should consider
+adding the new predictor to the model.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_regressor(model, 'temp')
+```
+
+## Added Variable Plot
+
+Provides information about the marginal importance of a feature X, given the
+other features already in the model.
+
+Steps to construct an added variable plot:
+*   Regress Y on all features other than X and store the residuals.
+*   Regress X on all the other features in the model.
+*   Construct a scatter plot with the residuals of the previous steps.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_added_variable(model)
+```
+
+## Residual Plus Component Plot
+
+Steps to construct the plot:
+*   Regress Y on all features including X.
+*   Multiply $e$ with regression coefficient of X.
+*   Construct plot of $eX$ and $X$.
+
+The residual plus component plot indicates whether any non-linearity is present
+in the relationship between Y and X and can suggest possible transformations for
+linearizing the data.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_comp_plus_resid(model)
+```
+
+
+
+# References
+https://olsrr.rsquaredacademy.com/articles/regression_diagnostics.html
+
+
+
+
+## Residual QQ Plot
+
+Used to violation of normality assumption.
+
+```{r}
+
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_qq(model)
+```
+
+## Residual Normality Test
+
+Tests for normality by means of multiple statistical tests.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_normality(model)
+```
+
+Correlation between observed residuals and expected residuals under normality.
+
+```{r}
+model = lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_test_correlation(model)
+```
+
+## Residual vs Fitted Values Plot
+
+A scatter plot of residuals vs fitted values to detect non-linearity, unequal
+error variances and outliers.
+
+```{r}
+model <- lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_fit(model)
+```
+
+A good residual vs fitted plot has:
+*   Residuals randomly spread around the 0 line.
+*   Residuals forming a band around the 0 (like a pipe) indicating homogeneity
+of error variance.
+*   No residual visibly away from the random pattern.
+
+## Residual Histogram
+
+Used to detect violation of normality assumption.
+
+```{r}
+model <- lm(formula = temp~wind+FFMC+DMC+DC+ISI+RH+rain+area, data = data_forestfires)
+ols_plot_resid_hist(model)
+```
+
+
+## References
+https://olsrr.rsquaredacademy.com/articles/residual_diagnostics.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
